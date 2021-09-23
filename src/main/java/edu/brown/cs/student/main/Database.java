@@ -46,14 +46,13 @@ public class Database {
 
     //create a relation
     PreparedStatement prep;
-    prep = conn.prepareStatement("CREATE TABLE corpus("
+    prep = conn.prepareStatement("CREATE TABLE IF NOT EXISTS corpus("
         + "id INTEGER,"
         + "filename TEXT,"
-        + "PRIMARY KEY (id),"
-        + "ON DELETE CASCADE ON UPDATE CASCADE);");
+        + "PRIMARY KEY (id);");
     prep.executeUpdate();
 
-    prep = conn.prepareStatement("CREATE TABLE word("
+    prep = conn.prepareStatement("CREATE TABLE IF NOT EXISTS word("
         + "corpus_id INTEGER,"
         + "word TEXT,"
         + "PRIMARY KEY (corpus_id),"
@@ -146,7 +145,8 @@ public class Database {
     Map<String, Integer> freqMap = new HashMap<>();
     //TODO: select all filenames and how many words are associated with those filenames from the database
     PreparedStatement prep = conn.prepareStatement( //Your SQL here!
-        "SELECT filename FROM corpus JOIN COUNT(*) FROM word ON corpus.id = word.corpus_id;");
+        "SELECT corpus.filename, COUNT(*) FROM corpus JOIN word ON corpus.id=word.corpus_id GROUP BY corpus.id;");
+    //SELECT filename FROM corpus JOIN COUNT(*) FROM word ON corpus.id = word.corpus_id;
     ResultSet rs = prep.executeQuery();
     while (rs.next()) {
       freqMap.put(rs.getString(1), rs.getInt(2));
@@ -168,7 +168,8 @@ public class Database {
   Map<String, Integer> getInstanceMap() throws SQLException {
     Map<String, Integer> instMap = new HashMap<>();
     //TODO: select the five most common words from the entire database, and how many times they appear
-    PreparedStatement prep = conn.prepareStatement(""); //Your SQL Here!
+    PreparedStatement prep = conn.prepareStatement(
+        "SELECT word, COUNT(*) FROM word GROUP BY word ORDER BY COUNT(*) DESC LIMIT 5;"); //Your SQL Here!
     //"SELECT word FROM word JOIN corpus ORDER BY ___ DESC BY LIMIT 5"
 
     ResultSet rs = prep.executeQuery();

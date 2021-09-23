@@ -1,9 +1,11 @@
 package edu.brown.cs.student.main;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +36,30 @@ public class Database {
      * TODO: Initialize the database connection, turn foreign keys on,
      *  and then create the word and corpus tables if they do not exist.
      */
+
+    //establish connection
+    Class.forName("org.sqlite.JDBC");
+    String urlToDB = "jdbc:sqlite:" + "data/data.sqlite3";
+    conn = DriverManager.getConnection(urlToDB);
+    Statement stat = conn.createStatement();
+    stat.executeUpdate("PRAGMA foreign_keys=ON;");
+
+    //create a relation
+    PreparedStatement prep;
+    prep = conn.prepareStatement("CREATE TABLE corpus("
+        + "id INTEGER,"
+        + "filename TEXT,"
+        + "PRIMARY KEY (id),"
+        + "ON DELETE CASCADE ON UPDATE CASCADE);");
+    prep.executeUpdate();
+
+    prep = conn.prepareStatement("CREATE TABLE word("
+        + "corpus_id INTEGER,"
+        + "word TEXT,"
+        + "PRIMARY KEY (corpus_id),"
+        + "FOREIGN KEY (corpus_id) REFERENCES corpus(id),"
+        + "ON DELETE CASCADE ON UPDATE CASCADE);");
+    prep.executeUpdate();
   }
 
 
@@ -47,11 +73,11 @@ public class Database {
 
     PreparedStatement prep =
         conn.prepareStatement("SELECT * from corpus WHERE filename=?");
-    prep.setString(1, filename);
+    prep.setString(1, filename); //changed question mark^ to input filename
     ResultSet rs = prep.executeQuery();
     if (rs.isClosed()) {
 
-      prep = conn.prepareStatement("INSERT INTO corpus VALUES (NULL, ?)");
+      prep = conn.prepareStatement("INSERT INTO corpus VALUES (NULL, ?)"); //NULL for auto-increment?
       prep.setString(1, filename);
       prep.executeUpdate();
       prep.close();
@@ -60,9 +86,10 @@ public class Database {
       prep.setString(1, filename);
       rs = prep.executeQuery();
       int id = rs.getInt(1);
-      List<String> corpus = Autocorrector.parseCorpus(filename);
+      List<String> corpus = Autocorrector.parseCorpus(filename); //corpus is a list of words in file
       System.err.println("Reading data from file " + filename + "...");
-      for (String word : corpus) {
+      //adding tuples to word relation
+      for (String word : corpus) { //for each word in the file
         prep = conn.prepareStatement("INSERT INTO word VALUES (?, ?) ");
         prep.setInt(1, id);
         prep.setString(2, word);
@@ -118,7 +145,8 @@ public class Database {
   Map<String, Integer> getFrequencyMap() throws SQLException {
     Map<String, Integer> freqMap = new HashMap<>();
     //TODO: select all filenames and how many words are associated with those filenames from the database
-    PreparedStatement prep = conn.prepareStatement(""); //Your SQL here!
+    PreparedStatement prep = conn.prepareStatement( //Your SQL here!
+        "SELECT filename FROM corpus JOIN COUNT(*) FROM word ON corpus.id = word.corpus_id;");
     ResultSet rs = prep.executeQuery();
     while (rs.next()) {
       freqMap.put(rs.getString(1), rs.getInt(2));
@@ -141,6 +169,8 @@ public class Database {
     Map<String, Integer> instMap = new HashMap<>();
     //TODO: select the five most common words from the entire database, and how many times they appear
     PreparedStatement prep = conn.prepareStatement(""); //Your SQL Here!
+    //"SELECT word FROM word JOIN corpus ORDER BY ___ DESC BY LIMIT 5"
+
     ResultSet rs = prep.executeQuery();
     while (rs.next()) {
       instMap.put(rs.getString(1), rs.getInt(2));

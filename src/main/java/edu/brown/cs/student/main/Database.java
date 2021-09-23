@@ -56,7 +56,7 @@ public class Database {
         + "corpus_id INTEGER,"
         + "word TEXT,"
         + "PRIMARY KEY (corpus_id),"
-        + "FOREIGN KEY (corpus_id) REFERENCES corpus(id),"
+        + "FOREIGN KEY (corpus_id) REFERENCES corpus(id)"
         + "ON DELETE CASCADE ON UPDATE CASCADE);");
     prep.executeUpdate();
   }

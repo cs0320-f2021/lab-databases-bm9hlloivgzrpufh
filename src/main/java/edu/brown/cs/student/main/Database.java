@@ -49,7 +49,7 @@ public class Database {
     prep = conn.prepareStatement("CREATE TABLE IF NOT EXISTS corpus("
         + "id INTEGER,"
         + "filename TEXT,"
-        + "PRIMARY KEY (id);");
+        + "PRIMARY KEY (id));");
     prep.executeUpdate();
 
     prep = conn.prepareStatement("CREATE TABLE IF NOT EXISTS word("
